@@ -7,14 +7,10 @@ const { processarStatusEntrega } = require('./processarStatus')
 function validarWebhookSecret(req, res, next) {
   const tokenHeader = req.headers['apikey']
   const tokenQuery = req.query.token
-  const token = tokenHeader || tokenQuery
-
-  console.log('=== WEBHOOK DEBUG ===')
-  console.log('Headers:', JSON.stringify(req.headers))
-  console.log('Query:', JSON.stringify(req.query))
-  console.log('Token recebido:', token)
-  console.log('Token esperado:', process.env.WEBHOOK_SECRET)
-  console.log('====================')
+  const tokenRaw = tokenHeader || tokenQuery || ''
+  
+  // Evolution API v1.8.2 com "webhook por eventos" anexa /nome-evento ao token
+  const token = tokenRaw.split('/')[0]
 
   if (token !== process.env.WEBHOOK_SECRET) {
     console.warn('Webhook recusado: token inválido')
