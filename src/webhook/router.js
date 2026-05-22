@@ -5,11 +5,7 @@ const { processarStatusEntrega } = require('./processarStatus')
 
 // Middleware: valida token secreto enviado pela Evolution API
 function validarWebhookSecret(req, res, next) {
-  const tokenHeader = req.headers['apikey']
-  const tokenQuery = req.query.token
-  const tokenRaw = tokenHeader || tokenQuery || ''
-  
-  // Evolution API v1.8.2 com "webhook por eventos" anexa /nome-evento ao token
+  const tokenRaw = req.headers['apikey'] || req.query.token || ''
   const token = tokenRaw.split('/')[0]
 
   if (token !== process.env.WEBHOOK_SECRET) {
