@@ -19,7 +19,7 @@ function criarWorkerAutomacoes() {
       .select('*')
       .eq('clinica_id', clinicaId)
       .eq('ativa', true)
-      .eq('gatilho_tipo', tipo)
+      .eq('tipo', tipo)
 
     if (!automacoes?.length) return
 
