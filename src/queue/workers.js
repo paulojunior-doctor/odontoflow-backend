@@ -21,7 +21,8 @@ function criarWorkerAutomacoes() {
       .eq('ativa', true)
       .eq('tipo', tipo)
 
-    if (!automacoes?.length) return
+    console.log(`[debug] Buscando automacoes: clinicaId=${clinicaId} tipo=${tipo} encontradas=${automacoes?.length || 0}`)
+      if (!automacoes?.length) return
 
     for (const auto of automacoes) {
       try {
