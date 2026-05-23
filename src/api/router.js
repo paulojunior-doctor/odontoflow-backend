@@ -266,4 +266,71 @@ router.get('/dashboard', autenticar, async (req, res) => {
   res.json({ conversasHoje, naoLidas, agsHoje, leadsAtivos })
 })
 
-module.exports = router
+// =============================================================
+// POST /api/agendamentos — criar agendamento e mover card no kanban
+// Body: { contatoId, inicio, fim, procedimento?, observacoes? }
+// =============================================================
+router.post('/agendamentos', autenticar, async (req, res) => {
+  const { contatoId, inicio, fim, procedimento, observacoes } = req.body
+  const { clinica_id, id: usuarioId } = req.usuario
+
+  if (!contatoId || !inicio || !fim) {
+    return res.status(400).json({ erro: 'contatoId, inicio e fim são obrigatórios' })
+  }
+
+  // Criar o agendamento
+  const { data: agendamento, error } = await supabase
+    .from('agendamentos')
+    .insert({
+      clinica_id,
+      contato_id: contatoId,
+      inicio,
+      fim,
+      procedimento,
+      observacoes,
+      criado_por: usuarioId,
+    })
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ erro: error.message })
+
+  // Buscar coluna "Agendado" do kanban
+  const { data: coluna } = await supabase
+    .from('pipeline_colunas')
+    .select('id')
+    .eq('clinica_id', clinica_id)
+    .ilike('nome', '%agendado%')
+    .limit(1)
+    .single()
+
+  // Mover card do contato para coluna "Agendado"
+  if (coluna) {
+    const { data: card } = await supabase
+      .from('pipeline_cards')
+      .select('id, coluna_id')
+      .eq('clinica_id', clinica_id)
+      .eq('contato_id', contatoId)
+      .eq('arquivado', false)
+      .maybeSingle()
+
+    if (card) {
+      await supabase
+        .from('pipeline_cards')
+        .update({ coluna_id: coluna.id })
+        .eq('id', card.id)
+
+      await supabase.from('pipeline_historico').insert({
+        card_id: card.id,
+        clinica_id,
+        coluna_origem: card.coluna_id,
+        coluna_destino: coluna.id,
+        movido_por: usuarioId,
+        automatico: true,
+      })
+    }
+  }
+
+  res.json({ ok: true, agendamento })
+})
+  module.exports = router
