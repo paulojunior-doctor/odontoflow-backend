@@ -37,7 +37,6 @@ router.post('/mensagens', autenticar, async (req, res) => {
     return res.status(400).json({ erro: 'conversaId e texto são obrigatórios' })
   }
 
-  // Buscar conversa + contato + canal (garantindo que é da mesma clínica)
   const { data: conversa, error: errConv } = await supabase
     .from('conversas')
     .select(`
@@ -54,7 +53,6 @@ router.post('/mensagens', autenticar, async (req, res) => {
     return res.status(422).json({ erro: 'Canal WhatsApp desconectado' })
   }
 
-  // Enviar via Evolution API
   let waMessageId = null
   try {
     waMessageId = await enviarMensagem({
@@ -67,7 +65,6 @@ router.post('/mensagens', autenticar, async (req, res) => {
     return res.status(502).json({ erro: 'Falha ao enviar pelo WhatsApp' })
   }
 
-  // Salvar mensagem de saída no banco
   const { data: mensagem, error: errMsg } = await supabase
     .from('mensagens')
     .insert({
@@ -86,7 +83,6 @@ router.post('/mensagens', autenticar, async (req, res) => {
 
   if (errMsg) return res.status(500).json({ erro: 'Mensagem enviada mas não salva no banco' })
 
-  // Atualizar status da conversa para "em_atendimento"
   if (conversa.status === 'aberta') {
     await supabase
       .from('conversas')
@@ -125,7 +121,6 @@ router.post('/mensagens/template', autenticar, async (req, res) => {
     return res.status(422).json({ erro: 'Canal desconectado' })
   }
 
-  // Mesclar variáveis automáticas + as fornecidas pelo usuário
   const varsCompletas = {
     nome: conversa.contato?.nome?.split(' ')[0] || 'você',
     ...variaveis,
@@ -138,7 +133,6 @@ router.post('/mensagens/template', autenticar, async (req, res) => {
     variaveis: varsCompletas,
   })
 
-  // Substituir variáveis no conteúdo para salvar o texto final
   let conteudoFinal = template.conteudo
   for (const [k, v] of Object.entries(varsCompletas)) {
     conteudoFinal = conteudoFinal.replaceAll(`{{${k}}}`, v)
@@ -195,7 +189,6 @@ router.patch('/pipeline/cards/:id', autenticar, async (req, res) => {
 
   if (!coluna_id) return res.status(400).json({ erro: 'coluna_id é obrigatório' })
 
-  // Buscar coluna origem para o histórico
   const { data: card } = await supabase
     .from('pipeline_cards')
     .select('coluna_id')
@@ -328,9 +321,12 @@ router.post('/agendamentos', autenticar, async (req, res) => {
         movido_por: usuarioId,
         automatico: true,
       })
+
+      console.log(`[agendamento] Card ${card.id} movido para coluna Agendado`)
     }
   }
 
   res.json({ ok: true, agendamento })
 })
-  module.exports = router
+
+module.exports = router
