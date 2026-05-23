@@ -19,8 +19,7 @@ function criarWorkerAutomacoes() {
       .select('*')
       .eq('clinica_id', clinicaId)
       .eq('ativa', true)
-      .eq('tipo', tipo)
-
+      .eq('gatilho_tipo', tipo)
     console.log(`[debug] Buscando automacoes: clinicaId=${clinicaId} tipo=${tipo} encontradas=${automacoes?.length || 0}`)
       if (!automacoes?.length) return
 
