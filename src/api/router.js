@@ -286,7 +286,10 @@ router.post('/agendamentos', autenticar, async (req, res) => {
     .select()
     .single()
 
-  if (error) return res.status(500).json({ erro: error.message })
+  if (error) {
+    console.error('[agendamento] Erro ao inserir:', JSON.stringify(error))
+    return res.status(500).json({ erro: error.message })
+  }
 
   // Buscar coluna "Agendado" do kanban
   const { data: coluna } = await supabase
